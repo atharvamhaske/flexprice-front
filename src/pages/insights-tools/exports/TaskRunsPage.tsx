@@ -25,7 +25,7 @@ const TaskRunsPage = () => {
 
 			{/* Task Runs Table */}
 			<div className='space-y-6'>
-				<TaskRunsTable scheduledTaskId={exportId!} />
+				<TaskRunsTable scheduledTaskId={exportId!} taskType='EXPORT' />
 			</div>
 		</Page>
 	);

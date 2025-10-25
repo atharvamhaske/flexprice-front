@@ -223,7 +223,7 @@ const ExportDetails = () => {
 
 				{/* Runs Tab */}
 				<TabsContent value='runs'>
-					<TaskRunsTable scheduledTaskId={exportId!} />
+					<TaskRunsTable scheduledTaskId={exportId!} taskType='EXPORT' />
 				</TabsContent>
 			</Tabs>
 

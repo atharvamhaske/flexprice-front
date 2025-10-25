@@ -8,9 +8,10 @@ import usePagination from '@/hooks/usePagination';
 
 interface TaskRunsTableProps {
 	scheduledTaskId: string;
+	taskType?: 'IMPORT' | 'EXPORT';
 }
 
-const TaskRunsTable: FC<TaskRunsTableProps> = ({ scheduledTaskId }) => {
+const TaskRunsTable: FC<TaskRunsTableProps> = ({ scheduledTaskId, taskType = 'EXPORT' }) => {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [dateRangeFilter, setDateRangeFilter] = useState<string>('all');
 	const { limit, offset, page, reset } = usePagination(10);
@@ -21,10 +22,11 @@ const TaskRunsTable: FC<TaskRunsTableProps> = ({ scheduledTaskId }) => {
 	}, [statusFilter, dateRangeFilter]);
 
 	const { data: runsResponse, isLoading } = useQuery({
-		queryKey: ['task-runs', scheduledTaskId, statusFilter, dateRangeFilter, page],
+		queryKey: ['task-runs', scheduledTaskId, taskType, statusFilter, dateRangeFilter, page],
 		queryFn: () => {
 			const params: any = {
 				scheduled_task_id: scheduledTaskId,
+				task_type: taskType,
 				limit,
 				offset,
 			};
