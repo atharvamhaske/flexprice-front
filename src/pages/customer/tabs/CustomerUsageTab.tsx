@@ -2,12 +2,11 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
-import { Card, Loader, FeatureMultiSelect, Button, DateRangePicker } from '@/components/atoms';
+import { Card, Loader, FeatureMultiSelect, DateRangePicker } from '@/components/atoms';
 import CustomerApi from '@/api/CustomerApi';
 import toast from 'react-hot-toast';
 import EventsApi from '@/api/EventsApi';
 import Feature from '@/models/Feature';
-import { RefreshCw } from 'lucide-react';
 import { GetUsageAnalyticsRequest } from '@/types/dto';
 import { WindowSize } from '@/models';
 import CustomerUsageChart from '@/components/molecules/CustomerUsageChart';
@@ -97,12 +96,6 @@ const CustomerUsageTab = () => {
 		updateBreadcrumb(4, 'Usage');
 	}, [updateBreadcrumb]);
 
-	const resetFilters = () => {
-		setSelectedFeatures([]);
-		setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)));
-		setEndDate(new Date());
-	};
-
 	if (customerLoading) {
 		return <Loader />;
 	}
@@ -152,9 +145,6 @@ const CustomerUsageTab = () => {
 								placeholder='Select date range'
 								title='Date Range'
 							/>
-							<Button variant='ghost' onClick={resetFilters} className='h-10 w-10 p-0' title='Reset filters'>
-								<RefreshCw className='h-4 w-4' />
-							</Button>
 						</div>
 					</div>
 				</div>

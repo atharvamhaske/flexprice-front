@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
-import { Page, Card, Button, Input, DateRangePicker, FeatureMultiSelect } from '@/components/atoms';
+import { Page, Card, Input, DateRangePicker, FeatureMultiSelect } from '@/components/atoms';
 import CostSheetApi from '@/api/CostSheetApi';
 import toast from 'react-hot-toast';
-import { Loader, RefreshCw } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { GetCostAnalyticsRequest } from '@/types/dto/Cost';
 import Feature from '@/models/Feature';
 import { formatNumber } from '@/utils/common';
@@ -79,13 +79,6 @@ const CostAnalyticsPage: React.FC = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const resetFilters = () => {
-		setCustomerId('');
-		setSelectedFeatures([]);
-		setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)));
-		setEndDate(new Date());
-	};
-
 	if (costError) {
 		toast.error('Error fetching cost data');
 	}
@@ -124,9 +117,6 @@ const CostAnalyticsPage: React.FC = () => {
 						placeholder='Select date range'
 						title='Date Range'
 					/>
-					<Button variant='ghost' onClick={resetFilters} className='h-10 w-10 p-0' title='Reset filters'>
-						<RefreshCw className='h-4 w-4' />
-					</Button>
 				</div>
 
 				{/* Summary Metrics */}

@@ -2,11 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
-import { Card, Loader, Button, DateRangePicker, FeatureMultiSelect } from '@/components/atoms';
+import { Card, Loader, DateRangePicker, FeatureMultiSelect } from '@/components/atoms';
 import CustomerApi from '@/api/CustomerApi';
 import toast from 'react-hot-toast';
 import CostSheetApi from '@/api/CostSheetApi';
-import { RefreshCw } from 'lucide-react';
 import { GetCostAnalyticsRequest } from '@/types/dto/Cost';
 import Feature from '@/models/Feature';
 import { formatNumber } from '@/utils/common';
@@ -91,12 +90,6 @@ const CustomerCostTab = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const resetFilters = () => {
-		setSelectedFeatures([]);
-		setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)));
-		setEndDate(new Date());
-	};
-
 	if (customerLoading) {
 		return <Loader />;
 	}
@@ -138,9 +131,6 @@ const CustomerCostTab = () => {
 					placeholder='Select date range'
 					title='Date Range'
 				/>
-				<Button variant='ghost' onClick={resetFilters} className='h-10 w-10 p-0' title='Reset filters'>
-					<RefreshCw className='h-4 w-4' />
-				</Button>
 			</div>
 
 			{/* Summary Metrics */}
