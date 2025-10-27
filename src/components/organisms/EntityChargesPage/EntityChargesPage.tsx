@@ -29,7 +29,7 @@ import CostSheetApi from '@/api/CostSheetApi';
 export enum ENTITY_TYPE {
 	PLAN = 'PLAN',
 	ADDON = 'ADDON',
-	COST_SHEET = 'COSTSHEET_V2',
+	COST_SHEET = 'COSTSHEET',
 }
 
 type PriceState = 'new' | 'edit' | 'saved';

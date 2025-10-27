@@ -11,7 +11,7 @@ import {
 } from '@/types/dto';
 
 class CostSheetApi {
-	private static baseUrl = '/costsheets-v2';
+	private static baseUrl = '/costsheets';
 
 	public static async ListCostSheets(payload: GetCostSheetsPayload = {}): Promise<GetCostSheetsResponse> {
 		const url = generateQueryParams(this.baseUrl, {
