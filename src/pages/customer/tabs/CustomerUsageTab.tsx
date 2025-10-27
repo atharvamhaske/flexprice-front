@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
-import { Card, Loader, FeatureMultiSelect, Input, Button, DatePicker, Select } from '@/components/atoms';
+import { Card, Loader, FeatureMultiSelect, Button, DateRangePicker } from '@/components/atoms';
 import CustomerApi from '@/api/CustomerApi';
 import toast from 'react-hot-toast';
 import EventsApi from '@/api/EventsApi';
@@ -15,28 +15,14 @@ import FlexpriceTable, { ColumnData } from '@/components/molecules/Table';
 import { UsageAnalyticItem } from '@/models/Analytics';
 import { formatNumber } from '@/utils/common';
 
-const windowSizeOptions = [
-	{ label: 'Minute', value: WindowSize.MINUTE },
-	{ label: '15 Minute', value: WindowSize.FIFTEEN_MIN },
-	{ label: '30 Minute', value: WindowSize.THIRTY_MIN },
-	{ label: 'Hour', value: WindowSize.HOUR },
-	{ label: '3 Hour', value: WindowSize.THREE_HOUR },
-	{ label: '6 Hour', value: WindowSize.SIX_HOUR },
-	{ label: '12 Hour', value: WindowSize.TWELVE_HOUR },
-	{ label: 'Day', value: WindowSize.DAY },
-	{ label: 'Week', value: WindowSize.WEEK },
-];
-
 const CustomerUsageTab = () => {
 	const { id: customerId } = useParams();
 	const { updateBreadcrumb } = useBreadcrumbsStore();
 
 	// Filter states
 	const [selectedFeatures, setSelectedFeatures] = useState<Feature[]>([]);
-	const [sources, setSources] = useState<string>('');
 	const [startDate, setStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 7)));
 	const [endDate, setEndDate] = useState<Date>(new Date());
-	const [windowSize, setWindowSize] = useState<WindowSize>(WindowSize.HOUR);
 
 	const {
 		data: customer,
@@ -59,17 +45,11 @@ const CustomerUsageTab = () => {
 
 		const params: GetUsageAnalyticsRequest = {
 			external_customer_id: customer.external_id,
+			window_size: WindowSize.HOUR,
 		};
 
 		if (selectedFeatures.length > 0) {
 			params.feature_ids = selectedFeatures.map((f) => f.id);
-		}
-
-		if (sources.trim()) {
-			params.sources = sources
-				.split(',')
-				.map((s) => s.trim())
-				.filter((s) => s);
 		}
 
 		if (startDate) {
@@ -80,12 +60,8 @@ const CustomerUsageTab = () => {
 			params.end_time = endDate.toISOString();
 		}
 
-		if (windowSize) {
-			params.window_size = windowSize;
-		}
-
 		return params;
-	}, [customer?.external_id, selectedFeatures, sources, startDate, endDate, windowSize]);
+	}, [customer?.external_id, selectedFeatures, startDate, endDate]);
 
 	// Debounced API parameters with 300ms delay
 	const [debouncedApiParams, setDebouncedApiParams] = useState<GetUsageAnalyticsRequest | null>(null);
@@ -123,10 +99,8 @@ const CustomerUsageTab = () => {
 
 	const resetFilters = () => {
 		setSelectedFeatures([]);
-		setSources('');
 		setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)));
 		setEndDate(new Date());
-		setWindowSize(WindowSize.HOUR);
 	};
 
 	if (customerLoading) {
@@ -141,15 +115,12 @@ const CustomerUsageTab = () => {
 		toast.error('Error fetching usage data');
 	}
 
-	const handleStartDateChange = (date: Date | undefined) => {
-		if (date) {
-			setStartDate(date);
+	const handleDateRangeChange = ({ startDate: newStartDate, endDate: newEndDate }: { startDate?: Date; endDate?: Date }) => {
+		if (newStartDate) {
+			setStartDate(newStartDate);
 		}
-	};
-
-	const handleEndDateChange = (date: Date | undefined) => {
-		if (date) {
-			setEndDate(date);
+		if (newEndDate) {
+			setEndDate(newEndDate);
 		}
 	};
 
@@ -161,17 +132,11 @@ const CustomerUsageTab = () => {
 					<div className='flex flex-col space-y-4'>
 						<div className='flex items-center justify-between'>
 							<h3 className='text-lg font-medium text-gray-900'>Usage Analytics</h3>
-							<div className='flex items-center space-x-2'>
-								<Button variant='ghost' size='sm' onClick={resetFilters} className='h-8 px-2 text-xs text-gray-500 hover:text-gray-700'>
-									<RefreshCw className='h-3.5 w-3.5 mr-1' />
-									Reset
-								</Button>
-							</div>
 						</div>
 
-						{/* Compact Filter Section */}
-						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pb-4 border-b border-gray-100'>
-							<div className='col-span-1 lg:col-span-2'>
+						{/* Filters in single line */}
+						<div className='flex flex-wrap items-end gap-3 pb-4 border-b border-gray-100'>
+							<div className='flex-1 min-w-[200px] max-w-md'>
 								<FeatureMultiSelect
 									label='Features'
 									placeholder='Select features'
@@ -180,27 +145,16 @@ const CustomerUsageTab = () => {
 									className='text-sm'
 								/>
 							</div>
-							<div className='col-span-1'>
-								<Input label='Sources' placeholder='Enter sources' value={sources} onChange={setSources} className='text-sm' />
-							</div>
-							<div className='col-span-1'>
-								<Select
-									label='Window Size'
-									className='w-full text-sm'
-									onChange={(value) => setWindowSize(value as WindowSize)}
-									value={windowSize}
-									options={windowSizeOptions.map((option) => ({ label: option.label, value: option.value }))}
-								/>
-							</div>
-						</div>
-
-						{/* Date Range Selection */}
-						<div className='flex flex-wrap items-center gap-3 pb-4'>
-							<div className='flex items-center gap-2'>
-								<DatePicker label='From' date={startDate} setDate={handleStartDateChange} placeholder='Start date' maxDate={endDate} />
-								<span className='text-gray-400 flex items-center px-2'>→</span>
-								<DatePicker label='To' date={endDate} setDate={handleEndDateChange} placeholder='End date' minDate={startDate} />
-							</div>
+							<DateRangePicker
+								startDate={startDate}
+								endDate={endDate}
+								onChange={handleDateRangeChange}
+								placeholder='Select date range'
+								title='Date Range'
+							/>
+							<Button variant='ghost' onClick={resetFilters} className='h-10 w-10 p-0' title='Reset filters'>
+								<RefreshCw className='h-4 w-4' />
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -208,12 +162,7 @@ const CustomerUsageTab = () => {
 				{/* Chart Display */}
 				<div className='px-2'>
 					{usageData ? (
-						<CustomerUsageChart
-							data={usageData}
-							title={`${customer?.name || 'Customer'} Usage`}
-							description={`Data from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`}
-							className='border-0 shadow-none'
-						/>
+						<CustomerUsageChart data={usageData} className='border-0 shadow-none' />
 					) : (
 						<div className='flex items-center justify-center h-[400px] text-center text-muted-foreground'>
 							{usageLoading ? (
@@ -259,14 +208,10 @@ const UsageDataTable: React.FC<{ items: UsageAnalyticItem[] }> = ({ items }) => 
 	// Define table columns
 	const columns: ColumnData<UsageAnalyticItem>[] = [
 		{
-			title: 'Name',
+			title: 'Fetaure',
 			render: (row: UsageAnalyticItem) => {
 				return <span>{row.name || row.name || 'Unknown'}</span>;
 			},
-		},
-		{
-			title: 'Source',
-			render: (row: UsageAnalyticItem) => row.source || '-',
 		},
 		{
 			title: 'Total Usage',
@@ -290,10 +235,6 @@ const UsageDataTable: React.FC<{ items: UsageAnalyticItem[] }> = ({ items }) => 
 					</span>
 				);
 			},
-		},
-		{
-			title: 'Events',
-			render: (row: UsageAnalyticItem) => formatNumber(row.event_count),
 		},
 	];
 

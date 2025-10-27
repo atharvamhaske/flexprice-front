@@ -85,12 +85,7 @@ interface CustomerUsageChartProps {
 	className?: string;
 }
 
-export const CustomerUsageChart: React.FC<CustomerUsageChartProps> = ({
-	data,
-	title,
-	description = 'Customer usage metrics',
-	className,
-}) => {
+export const CustomerUsageChart: React.FC<CustomerUsageChartProps> = ({ data, title, description, className }) => {
 	// Process the data for chart display
 	const { chartData, seriesConfig, seriesIds } = normalizeUsageData(data.items);
 
@@ -436,44 +431,6 @@ export const CustomerUsageChart: React.FC<CustomerUsageChartProps> = ({
 							))}
 						</LineChart>
 					</ResponsiveContainer>
-				</div>
-				<div className='mt-4 flex flex-col gap-1'>
-					<div className='text-[11px] text-gray-400 flex items-center'>
-						<svg
-							xmlns='http://www.w3.org/2000/svg'
-							width='12'
-							height='12'
-							viewBox='0 0 24 24'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'
-							className='mr-1 opacity-70'>
-							<rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect>
-							<circle cx='8.5' cy='8.5' r='1.5'></circle>
-							<polyline points='21 15 16 10 5 21'></polyline>
-						</svg>
-						<span>Click and drag on chart to select an area to zoom in</span>
-					</div>
-					<div className='text-[11px] text-gray-400 flex items-center'>
-						<svg
-							xmlns='http://www.w3.org/2000/svg'
-							width='12'
-							height='12'
-							viewBox='0 0 24 24'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'
-							className='mr-1 opacity-70'>
-							<polyline points='1 4 1 10 7 10'></polyline>
-							<polyline points='23 20 23 14 17 14'></polyline>
-							<path d='M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15'></path>
-						</svg>
-						<span>Use the slider below to pan through time</span>
-					</div>
 				</div>
 			</CardContent>
 		</Card>
