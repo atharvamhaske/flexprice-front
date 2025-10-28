@@ -1,6 +1,8 @@
 import { NODE_ENV, NodeEnv } from '@/types/env';
 import { useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { Button } from '@/components/atoms';
+import { InfoIcon, XIcon } from 'lucide-react';
 
 const isProd = NODE_ENV === NodeEnv.PROD;
 const LAST_DISMISSED_VERSION = 'lastDismissedVersion';
@@ -31,26 +33,46 @@ export default function useVersionCheck(intervalMs = 5 * 60 * 1000) {
 					}
 
 					console.info(`[VersionCheck][${timestamp}] New version detected. Current: ${currentVersion}, Latest: ${latestVersion}`);
-					const toastId = toast(
+					toast(
 						(t) => (
-							<div className='text-sm text-black rounded flex justify-between items-center'>
-								<span>New version available!</span>
-								<button
-									className='ml-4 bg-black text-white px-2 py-1 rounded'
-									onClick={() => {
-										toast.dismiss(t.id);
-										window.location.reload();
-									}}>
-									Update
-								</button>
-								<button
-									className='ml-4 bg-black text-white px-2 py-1 rounded'
-									onClick={() => {
-										localStorage.setItem(LAST_DISMISSED_VERSION, latestVersion);
-										toast.dismiss(toastId);
-									}}>
-									Ignore
-								</button>
+							<div className='bg-white border-gray-200 w-80'>
+								{/* Header */}
+								<div className='flex items-center justify-between mb-3'>
+									<div className='flex items-center gap-3'>
+										<div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
+											<InfoIcon className='w-4 h-4 text-blue-600' />
+										</div>
+										<h3 className='text-lg font-regular text-gray-900'>New version available</h3>
+									</div>
+									<button onClick={() => toast.dismiss(t.id)} className='text-gray-400 hover:text-gray-600 transition-colors'>
+										<XIcon className='w-5 h-5' />
+									</button>
+								</div>
+
+								{/* Body */}
+								<p className='text-sm text-gray-600 mb-4'>A new software version is available for download.</p>
+
+								{/* Action Buttons */}
+								<div className='flex gap-3 justify-end'>
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => {
+											localStorage.setItem(LAST_DISMISSED_VERSION, latestVersion);
+											toast.dismiss(t.id);
+										}}>
+										Not now
+									</Button>
+									<Button
+										variant='default'
+										size='sm'
+										onClick={() => {
+											toast.dismiss(t.id);
+											window.location.reload();
+										}}>
+										Update
+									</Button>
+								</div>
 							</div>
 						),
 						{
