@@ -1,6 +1,6 @@
 import { Input, Spacer, Textarea } from '@/components/atoms';
 import { Plan } from '@/models/Plan';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Props {
 	plan: Partial<Plan>;
@@ -11,6 +11,11 @@ interface Props {
 const PlanDetailsSection = ({ plan, setPlanField, errors }: Props) => {
 	// Track if user manually edited the lookup key to stop auto-generation
 	const [isLookupKeyManuallyEdited, setIsLookupKeyManuallyEdited] = useState(false);
+
+	useEffect(() => {
+		// Reset manual edit tracking when plan changes
+		setIsLookupKeyManuallyEdited(false);
+	}, [plan]);
 
 	return (
 		<div className='p-6  rounded-xl border border-[#E4E4E7]'>

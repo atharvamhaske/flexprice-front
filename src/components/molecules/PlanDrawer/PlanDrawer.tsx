@@ -77,7 +77,7 @@ const PlanDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQuery
 		setErrors({});
 		// Reset manual edit tracking when drawer opens/closes or data changes
 		setIsLookupKeyManuallyEdited(false);
-	}, [data]);
+	}, [data, open]);
 
 	const validateForm = () => {
 		const newErrors: Partial<Record<keyof CreatePlanRequest, string>> = {};
