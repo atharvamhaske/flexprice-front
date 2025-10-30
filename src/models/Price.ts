@@ -91,6 +91,6 @@ export enum BILLING_PERIOD {
 
 export enum PRICE_STATUS {
 	UPCOMING = 'upcoming',
-	EXPIRED = 'expired',
+	INACTIVE = 'inactive',
 	ACTIVE = 'active',
 }

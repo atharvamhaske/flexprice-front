@@ -59,7 +59,7 @@ const getPriceStatus = (price: Price & { start_date?: string; end_date?: string 
 		const endDate = new Date(price.end_date);
 		// Check if date is valid (not NaN)
 		if (!isNaN(endDate.getTime()) && endDate < now) {
-			return PRICE_STATUS.EXPIRED;
+			return PRICE_STATUS.INACTIVE;
 		}
 	}
 
@@ -67,12 +67,12 @@ const getPriceStatus = (price: Price & { start_date?: string; end_date?: string 
 	return PRICE_STATUS.ACTIVE;
 };
 
-const getStatusChipVariant = (status: PRICE_STATUS): 'info' | 'failed' | 'success' => {
+const getStatusChipVariant = (status: PRICE_STATUS): 'info' | 'default' | 'success' => {
 	switch (status) {
 		case PRICE_STATUS.UPCOMING:
 			return 'info';
-		case PRICE_STATUS.EXPIRED:
-			return 'failed';
+		case PRICE_STATUS.INACTIVE:
+			return 'default';
 		case PRICE_STATUS.ACTIVE:
 			return 'success';
 		default:
