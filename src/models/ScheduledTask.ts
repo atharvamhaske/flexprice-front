@@ -1,8 +1,17 @@
 import { BaseModel } from './base';
 
-export type ScheduledEntityType = 'events' | 'invoice';
+export enum SCHEDULED_ENTITY_TYPE {
+	EVENTS = 'events',
+	INVOICE = 'invoice',
+}
 
-export type ScheduledTaskInterval = 'hourly' | 'daily';
+export enum SCHEDULED_TASK_INTERVAL {
+	HOURLY = 'hourly',
+	DAILY = 'daily',
+}
+
+export type ScheduledEntityType = SCHEDULED_ENTITY_TYPE;
+export type ScheduledTaskInterval = SCHEDULED_TASK_INTERVAL;
 
 export interface ScheduledTask extends BaseModel {
 	readonly connection_id: string;

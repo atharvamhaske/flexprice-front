@@ -26,7 +26,7 @@ const IntegrationDetails = () => {
 	// Fetch connections from API
 	const { data: connectionsResponse, refetch: refetchConnections } = useQuery({
 		queryKey: ['connections', name],
-		queryFn: () => ConnectionApi.getAllConnections({ provider_type: name.toLowerCase() }),
+		queryFn: () => ConnectionApi.getAllConnections({ provider_type: name.toLowerCase() as CONNECTION_PROVIDER_TYPE }),
 		enabled: !!name,
 	});
 

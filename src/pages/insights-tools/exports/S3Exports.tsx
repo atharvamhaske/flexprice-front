@@ -7,6 +7,7 @@ import { ConnectionApi, TaskApi } from '@/api';
 import toast from 'react-hot-toast';
 import S3ConnectionDrawer from '@/components/molecules/S3ConnectionDrawer/S3ConnectionDrawer';
 import { ApiDocsContent } from '@/components/molecules';
+import { CONNECTION_PROVIDER_TYPE } from '@/models';
 
 const S3Exports = () => {
 	const navigate = useNavigate();
@@ -19,7 +20,7 @@ const S3Exports = () => {
 		isLoading,
 	} = useQuery({
 		queryKey: ['connections', 's3'],
-		queryFn: () => ConnectionApi.getAllConnections({ provider_type: 's3' }),
+		queryFn: () => ConnectionApi.getAllConnections({ provider_type: CONNECTION_PROVIDER_TYPE.S3 }),
 	});
 
 	const connections = connectionsResponse?.connections || [];

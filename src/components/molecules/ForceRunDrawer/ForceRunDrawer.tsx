@@ -1,7 +1,10 @@
 import { FC, useState, useCallback } from 'react';
-import { Button, Input, Modal } from '@/components/atoms';
-import { RadioGroup, RadioGroupItem, Label } from '@/components/ui';
+import { Button } from '@/components/atoms';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { CalendarIcon, ClockIcon } from 'lucide-react';
+import Input from '@/components/atoms/Input/Input';
 
 interface ForceRunDrawerProps {
 	isOpen: boolean;
@@ -10,7 +13,12 @@ interface ForceRunDrawerProps {
 	isLoading?: boolean;
 }
 
-type RunType = 'current' | 'custom';
+enum RunType {
+	CURRENT = 'current',
+	CUSTOM = 'custom',
+}
+
+type RunTypeValue = RunType;
 
 interface DateTimeFields {
 	date: string;
@@ -24,19 +32,16 @@ interface ValidationErrors {
 	endTime?: string;
 }
 
-const RUN_TYPE_OPTIONS = {
-	CURRENT: 'current' as const,
-	CUSTOM: 'custom' as const,
-} as const;
-
-const DateTimeInput: FC<{
+interface DateTimeInputProps {
 	type: 'date' | 'time';
 	value: string;
 	onChange: (value: string) => void;
 	onClearError: () => void;
 	error?: string;
 	min?: string;
-}> = ({ type, value, onChange, onClearError, error, min }) => {
+}
+
+const DateTimeInput: FC<DateTimeInputProps> = ({ type, value, onChange, onClearError, error, min }) => {
 	const Icon = type === 'date' ? CalendarIcon : ClockIcon;
 
 	const handleInputClick = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
@@ -69,7 +74,7 @@ const DateTimeInput: FC<{
 	);
 };
 
-const DateTimeRangeInput: FC<{
+interface DateTimeRangeInputProps {
 	label: string;
 	dateValue: string;
 	timeValue: string;
@@ -81,7 +86,9 @@ const DateTimeRangeInput: FC<{
 	timeError?: string;
 	minDate?: string;
 	minTime?: string;
-}> = ({
+}
+
+const DateTimeRangeInput: FC<DateTimeRangeInputProps> = ({
 	label,
 	dateValue,
 	timeValue,
@@ -96,7 +103,7 @@ const DateTimeRangeInput: FC<{
 }) => {
 	return (
 		<div className='space-y-2'>
-			<label className='text-sm font-medium text-gray-900'>{label}</label>
+			<Label className='text-sm font-medium text-gray-900'>{label}</Label>
 			<div className='grid grid-cols-2 gap-3'>
 				<DateTimeInput
 					type='date'
@@ -121,7 +128,7 @@ const DateTimeRangeInput: FC<{
 };
 
 const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfirm, isLoading }) => {
-	const [runType, setRunType] = useState<RunType>(RUN_TYPE_OPTIONS.CURRENT);
+	const [runType, setRunType] = useState<RunTypeValue>(RunType.CURRENT);
 	const [startDateTime, setStartDateTime] = useState<DateTimeFields>({ date: '', time: '' });
 	const [endDateTime, setEndDateTime] = useState<DateTimeFields>({ date: '', time: '' });
 	const [errors, setErrors] = useState<ValidationErrors>({});
@@ -159,7 +166,7 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 	}, []);
 
 	const handleClose = useCallback(() => {
-		setRunType(RUN_TYPE_OPTIONS.CURRENT);
+		setRunType(RunType.CURRENT);
 		setStartDateTime({ date: '', time: '' });
 		setEndDateTime({ date: '', time: '' });
 		setErrors({});
@@ -167,7 +174,7 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 	}, [onOpenChange]);
 
 	const handleConfirm = useCallback(() => {
-		if (runType === RUN_TYPE_OPTIONS.CURRENT) {
+		if (runType === RunType.CURRENT) {
 			onConfirm();
 			handleClose();
 			return;
@@ -224,60 +231,35 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 		[errors.endTime],
 	);
 
+	const clearDateError = useCallback((field: keyof ValidationErrors) => {
+		setErrors((prev) => ({ ...prev, [field]: undefined }));
+	}, []);
+
 	return (
-		<Modal isOpen={isOpen} onOpenChange={handleClose} className='w-full max-w-md'>
-			<div className='bg-white rounded-lg shadow-xl p-6'>
-				{/* Hide native browser icons for date/time inputs */}
-				<style>{`
-					input[type="date"]::-webkit-calendar-picker-indicator,
-					input[type="time"]::-webkit-calendar-picker-indicator {
-						opacity: 0;
-						cursor: pointer;
-						width: 20px;
-						height: 20px;
-					}
-					input[type="date"]::-webkit-inner-spin-button,
-					input[type="time"]::-webkit-inner-spin-button {
-						display: none;
-					}
-					input[type="date"]::-webkit-clear-button,
-					input[type="time"]::-webkit-clear-button {
-						display: none;
-					}
-					input[type="date"],
-					input[type="time"] {
-						-moz-appearance: textfield;
-					}
-					input[type="date"]:focus,
-					input[type="time"]:focus {
-						outline: none;
-					}
-				`}</style>
+		<Dialog open={isOpen} onOpenChange={handleClose}>
+			<DialogContent className='w-full max-w-md'>
+				<DialogHeader>
+					<DialogTitle>Manual Export</DialogTitle>
+					<DialogDescription>Choose to run the export for the current interval or specify a custom time range.</DialogDescription>
+				</DialogHeader>
 
-				{/* Header */}
-				<div className='mb-4'>
-					<h2 className='text-xl font-semibold text-gray-900'>Manual Export</h2>
-					<p className='text-sm text-gray-500 mt-1'>Choose to run the export for the current interval or specify a custom time range.</p>
-				</div>
-
-				{/* Content */}
 				<div className='space-y-4 py-4'>
-					<RadioGroup value={runType} onValueChange={(value) => setRunType(value as RunType)}>
+					<RadioGroup value={runType} onValueChange={(value) => setRunType(value as RunTypeValue)}>
 						<div className='flex items-center space-x-2'>
-							<RadioGroupItem value={RUN_TYPE_OPTIONS.CURRENT} id='current' />
+							<RadioGroupItem value={RunType.CURRENT} id='current' />
 							<Label htmlFor='current' className='font-normal cursor-pointer'>
 								Run current interval
 							</Label>
 						</div>
 						<div className='flex items-center space-x-2'>
-							<RadioGroupItem value={RUN_TYPE_OPTIONS.CUSTOM} id='custom' />
+							<RadioGroupItem value={RunType.CUSTOM} id='custom' />
 							<Label htmlFor='custom' className='font-normal cursor-pointer'>
 								Select custom date range
 							</Label>
 						</div>
 					</RadioGroup>
 
-					{runType === RUN_TYPE_OPTIONS.CUSTOM && (
+					{runType === RunType.CUSTOM && (
 						<div className='space-y-5 pt-3 pl-6 border-l-2 border-gray-200'>
 							<DateTimeRangeInput
 								label='Start Time'
@@ -285,8 +267,8 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 								timeValue={startDateTime.time}
 								onDateChange={handleStartDateChange}
 								onTimeChange={handleStartTimeChange}
-								onClearDateError={() => setErrors((prev) => ({ ...prev, startDate: undefined }))}
-								onClearTimeError={() => setErrors((prev) => ({ ...prev, startTime: undefined }))}
+								onClearDateError={() => clearDateError('startDate')}
+								onClearTimeError={() => clearDateError('startTime')}
 								dateError={errors.startDate}
 								timeError={errors.startTime}
 							/>
@@ -297,8 +279,8 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 								timeValue={endDateTime.time}
 								onDateChange={handleEndDateChange}
 								onTimeChange={handleEndTimeChange}
-								onClearDateError={() => setErrors((prev) => ({ ...prev, endDate: undefined }))}
-								onClearTimeError={() => setErrors((prev) => ({ ...prev, endTime: undefined }))}
+								onClearDateError={() => clearDateError('endDate')}
+								onClearTimeError={() => clearDateError('endTime')}
 								dateError={errors.endDate}
 								timeError={errors.endTime}
 								minDate={startDateTime.date}
@@ -308,17 +290,16 @@ const ForceRunDrawer: FC<ForceRunDrawerProps> = ({ isOpen, onOpenChange, onConfi
 					)}
 				</div>
 
-				{/* Footer */}
-				<div className='flex gap-2 pt-4'>
+				<DialogFooter>
 					<Button variant='outline' onClick={handleClose} disabled={isLoading} className='flex-1'>
 						Cancel
 					</Button>
 					<Button onClick={handleConfirm} isLoading={isLoading} className='flex-1'>
 						Run Export
 					</Button>
-				</div>
-			</div>
-		</Modal>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 };
 

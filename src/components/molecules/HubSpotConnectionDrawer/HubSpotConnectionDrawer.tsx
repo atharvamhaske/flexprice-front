@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import ConnectionApi from '@/api/ConnectionApi';
 import toast from 'react-hot-toast';
 import { Copy, CheckCircle, ChevronDown, ChevronRight } from 'lucide-react';
-import { Connection } from '@/models';
+import { CONNECTION_PROVIDER_TYPE, Connection } from '@/models';
 
 interface HubSpotConnection extends Connection {
 	sync_config?: {
@@ -165,9 +165,9 @@ const HubSpotConnectionDrawer: FC<HubSpotConnectionDrawerProps> = ({ isOpen, onO
 		mutationFn: async () => {
 			const payload = {
 				name: formData.name,
-				provider_type: 'hubspot',
+				provider_type: CONNECTION_PROVIDER_TYPE.HUBSPOT,
 				encrypted_secret_data: {
-					provider_type: 'hubspot' as const,
+					provider_type: CONNECTION_PROVIDER_TYPE.HUBSPOT,
 					access_token: formData.access_token,
 					client_secret: formData.client_secret,
 				},
