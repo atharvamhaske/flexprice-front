@@ -1,5 +1,5 @@
-import { FC, useCallback, useState } from 'react';
-import { Button, Card, CardHeader, NoDataCard, Chip } from '@/components/atoms';
+import React, { FC, useCallback, useState } from 'react';
+import { Button, Card, CardHeader, NoDataCard, Chip, Tooltip } from '@/components/atoms';
 import { FlexpriceTable, ColumnData, DropdownMenu, TerminatePriceModal, SyncOption, UpdatePriceDialog } from '@/components/molecules';
 import { Price, Plan, PRICE_STATUS } from '@/models';
 import { Plus, Trash2, Pencil } from 'lucide-react';
@@ -15,6 +15,7 @@ import { ChargeValueCell } from '@/components/molecules';
 import { formatInvoiceCadence } from '@/pages';
 import { Dialog } from '@/components/ui';
 import { DeletePriceRequest } from '@/types/dto';
+import { formatDateTimeWithSecondsAndTimezone } from '@/utils/common/format_date';
 
 // ===== TYPES & CONSTANTS =====
 
@@ -126,6 +127,48 @@ const getStatusChipVariant = (status: PRICE_STATUS): 'info' | 'default' | 'succe
 		default:
 			return 'success';
 	}
+};
+
+const formatPriceDateTooltip = (price: Price & { start_date?: string; end_date?: string }): React.ReactNode => {
+	const dateItems: React.ReactNode[] = [];
+
+	if (price.start_date && price.start_date.trim() !== '') {
+		try {
+			const startDate = new Date(price.start_date);
+			if (!isNaN(startDate.getTime())) {
+				dateItems.push(
+					<div key='start' className='flex items-center gap-2'>
+						<span className='text-xs font-medium text-gray-500'>Start</span>
+						<span className='text-sm font-medium'>{formatDateTimeWithSecondsAndTimezone(startDate)}</span>
+					</div>,
+				);
+			}
+		} catch {
+			// Ignore invalid dates
+		}
+	}
+
+	if (price.end_date && price.end_date.trim() !== '') {
+		try {
+			const endDate = new Date(price.end_date);
+			if (!isNaN(endDate.getTime())) {
+				dateItems.push(
+					<div key='end' className='flex items-center gap-2'>
+						<span className='text-xs font-medium text-gray-500'>End</span>
+						<span className='text-sm font-medium'>{formatDateTimeWithSecondsAndTimezone(endDate)}</span>
+					</div>,
+				);
+			}
+		} catch {
+			// Ignore invalid dates
+		}
+	}
+
+	if (dateItems.length === 0) {
+		return <span className='text-sm'>No date information</span>;
+	}
+
+	return <div className='flex flex-col gap-2'>{dateItems}</div>;
 };
 
 const PlanPriceTable: FC<PlanChargesTableProps> = ({ plan, onPriceUpdate }) => {
@@ -240,10 +283,23 @@ const PlanPriceTable: FC<PlanChargesTableProps> = ({ plan, onPriceUpdate }) => {
 		{
 			title: 'Status',
 			render(rowData) {
-				const status = getPriceStatus(rowData as Price & { start_date?: string; end_date?: string });
+				const price = rowData as Price & { start_date?: string; end_date?: string };
+				const status = getPriceStatus(price);
 				const variant = getStatusChipVariant(status);
 				const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
-				return <Chip label={statusLabel} variant={variant} />;
+				const tooltipContent = formatPriceDateTooltip(price);
+
+				return (
+					<Tooltip
+						content={tooltipContent}
+						delayDuration={0}
+						sideOffset={5}
+						className='bg-white border border-gray-200 shadow-lg text-sm text-gray-900 px-4 py-3 rounded-lg max-w-[320px]'>
+						<span>
+							<Chip label={statusLabel} variant={variant} />
+						</span>
+					</Tooltip>
+				);
 			},
 		},
 		{

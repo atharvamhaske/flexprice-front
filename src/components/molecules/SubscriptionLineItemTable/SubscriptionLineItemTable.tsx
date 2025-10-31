@@ -1,12 +1,13 @@
-import { Card, CardHeader, NoDataCard } from '@/components/atoms';
+import { Card, CardHeader, NoDataCard, Chip, Tooltip } from '@/components/atoms';
 import { ChargeValueCell, ColumnData, FlexpriceTable, TerminateLineItemModal, DropdownMenu } from '@/components/molecules';
-import { formatDateShort } from '@/utils/common/helper_functions';
 import { LineItem } from '@/models/Subscription';
 import { FC, useState, useCallback } from 'react';
 import { Trash2, Pencil } from 'lucide-react';
 import { ENTITY_STATUS } from '@/models/base';
 import { formatBillingPeriodForDisplay } from '@/utils/common/helper_functions';
 import { Dialog } from '@/components/ui/dialog';
+import { PRICE_TYPE, PRICE_STATUS } from '@/models/Price';
+import { formatDateTimeWithSecondsAndTimezone } from '@/utils/common/format_date';
 
 interface Props {
 	data: LineItem[];
@@ -17,12 +18,13 @@ interface Props {
 
 interface LineItemDropdownProps {
 	row: LineItem;
-	isDisabled: boolean;
+	isEditDisabled: boolean;
+	isTerminateDisabled: boolean;
 	onEdit: (lineItem: LineItem) => void;
 	onTerminate: (lineItem: LineItem) => void;
 }
 
-const LineItemDropdown: FC<LineItemDropdownProps> = ({ row, isDisabled, onEdit, onTerminate }) => {
+const LineItemDropdown: FC<LineItemDropdownProps> = ({ row, isEditDisabled, isTerminateDisabled, onEdit, onTerminate }) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const handleClick = (e: React.MouseEvent) => {
@@ -45,7 +47,7 @@ const LineItemDropdown: FC<LineItemDropdownProps> = ({ row, isDisabled, onEdit, 
 							setIsOpen(false);
 							onEdit(row);
 						},
-						disabled: isDisabled,
+						disabled: isEditDisabled,
 					},
 					{
 						label: 'Terminate',
@@ -55,12 +57,94 @@ const LineItemDropdown: FC<LineItemDropdownProps> = ({ row, isDisabled, onEdit, 
 							setIsOpen(false);
 							onTerminate(row);
 						},
-						disabled: isDisabled,
+						disabled: isTerminateDisabled,
 					},
 				]}
 			/>
 		</div>
 	);
+};
+
+const getLineItemStatus = (lineItem: LineItem): PRICE_STATUS => {
+	const now = new Date();
+	const defaultEndDate = '0001-01-01T00:00:00Z';
+
+	// Check if start_date is in the future
+	if (lineItem.start_date && lineItem.start_date.trim() !== '') {
+		const startDate = new Date(lineItem.start_date);
+		// Check if date is valid (not NaN)
+		if (!isNaN(startDate.getTime()) && startDate > now) {
+			return PRICE_STATUS.UPCOMING;
+		}
+	}
+
+	// Check if end_date is in the past
+	if (lineItem.end_date && lineItem.end_date.trim() !== '' && lineItem.end_date !== defaultEndDate) {
+		const endDate = new Date(lineItem.end_date);
+		// Check if date is valid (not NaN)
+		if (!isNaN(endDate.getTime()) && endDate < now) {
+			return PRICE_STATUS.INACTIVE;
+		}
+	}
+
+	// Default to active
+	return PRICE_STATUS.ACTIVE;
+};
+
+const getStatusChipVariant = (status: PRICE_STATUS): 'info' | 'default' | 'success' => {
+	switch (status) {
+		case PRICE_STATUS.UPCOMING:
+			return 'info';
+		case PRICE_STATUS.INACTIVE:
+			return 'default';
+		case PRICE_STATUS.ACTIVE:
+			return 'success';
+		default:
+			return 'success';
+	}
+};
+
+const formatLineItemDateTooltip = (lineItem: LineItem): React.ReactNode => {
+	const dateItems: React.ReactNode[] = [];
+	const defaultEndDate = '0001-01-01T00:00:00Z';
+
+	if (lineItem.start_date && lineItem.start_date.trim() !== '') {
+		try {
+			const startDate = new Date(lineItem.start_date);
+			if (!isNaN(startDate.getTime())) {
+				dateItems.push(
+					<div key='start' className='flex items-center gap-2'>
+						<span className='text-xs font-medium text-gray-500'>Start</span>
+						<span className='text-sm font-medium'>{formatDateTimeWithSecondsAndTimezone(startDate)}</span>
+					</div>,
+				);
+			}
+		} catch {
+			// Ignore invalid dates
+		}
+	}
+
+	if (lineItem.end_date && lineItem.end_date.trim() !== '' && lineItem.end_date !== defaultEndDate) {
+		try {
+			const endDate = new Date(lineItem.end_date);
+			if (!isNaN(endDate.getTime())) {
+				dateItems.push(
+					<div key='end' className='flex items-center gap-2'>
+						<span className='text-xs font-medium text-gray-500'>End</span>
+						<span className='text-sm font-medium'>{formatDateTimeWithSecondsAndTimezone(endDate)}</span>
+					</div>,
+				);
+			}
+		} catch {
+			// Ignore invalid dates
+		}
+	}
+
+	if (dateItems.length === 0) {
+		return <span className='text-sm'>No date information</span>;
+	}
+
+	return <div className='flex flex-col gap-2'>{dateItems}</div>;
 };
 
 const SubscriptionLineItemTable: FC<Props> = ({ data, onEdit, onTerminate, isLoading }) => {
@@ -114,15 +198,24 @@ const SubscriptionLineItemTable: FC<Props> = ({ data, onEdit, onTerminate, isLoa
 			render: (row) => <div className='flex items-center gap-2'>{row.price ? <ChargeValueCell data={row.price} /> : '--'}</div>,
 		},
 		{
-			title: 'Start Date',
-			render: (row) => formatDateShort(row.start_date),
-		},
-		{
-			title: 'End Date',
+			title: 'Status',
 			render(row) {
-				const defaultEndDate = '0001-01-01T00:00:00Z';
-				const hasValidEndDate = row.end_date && row.end_date.trim() !== '' && row.end_date !== defaultEndDate;
-				return <span>{hasValidEndDate ? formatDateShort(row.end_date) : '--'}</span>;
+				const status = getLineItemStatus(row);
+				const variant = getStatusChipVariant(status);
+				const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+				const tooltipContent = formatLineItemDateTooltip(row);
+
+				return (
+					<Tooltip
+						content={tooltipContent}
+						delayDuration={0}
+						sideOffset={5}
+						className='bg-white border border-gray-200 shadow-lg text-sm text-gray-900 px-4 py-3 rounded-lg max-w-[320px]'>
+						<span>
+							<Chip label={statusLabel} variant={variant} />
+						</span>
+					</Tooltip>
+				);
 			},
 		},
 		{
@@ -133,9 +226,18 @@ const SubscriptionLineItemTable: FC<Props> = ({ data, onEdit, onTerminate, isLoa
 				const isArchived = row.status === ENTITY_STATUS.ARCHIVED;
 				const defaultEndDate = '0001-01-01T00:00:00Z';
 				const hasEndDate = !!(row.end_date && row.end_date.trim() !== '' && row.end_date !== defaultEndDate);
-				const isDisabled = isArchived || hasEndDate;
+				const isTerminateDisabled = isArchived || hasEndDate;
+				const isEditDisabled = isArchived || hasEndDate || row.price_type !== PRICE_TYPE.USAGE;
 
-				return <LineItemDropdown row={row} isDisabled={isDisabled} onEdit={handleEditClick} onTerminate={handleTerminateClick} />;
+				return (
+					<LineItemDropdown
+						row={row}
+						isEditDisabled={isEditDisabled}
+						isTerminateDisabled={isTerminateDisabled}
+						onEdit={handleEditClick}
+						onTerminate={handleTerminateClick}
+					/>
+				);
 			},
 		},
 	];
