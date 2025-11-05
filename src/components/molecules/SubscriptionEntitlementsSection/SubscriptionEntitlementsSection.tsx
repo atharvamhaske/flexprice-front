@@ -63,21 +63,12 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 		if (!entitlementsData?.features) return [];
 
 		return entitlementsData.features.map((item: any) => {
-			// Get the first source (usually there's only one for subscription entitlements)
-			const source = item.sources?.[0] || {};
-
 			return {
-				id: source.entitlement_id || '',
 				feature: item.feature,
 				feature_id: item.feature?.id || '',
 				feature_type: item.feature?.type || '',
-				entity_type: source.entity_type || 'subscription',
-				entity_id: source.entity_id || '',
-				is_enabled: source.is_enabled ?? item.entitlement?.is_enabled ?? true,
-				usage_limit: source.usage_limit ?? item.entitlement?.usage_limit ?? null,
-				usage_reset_period: item.entitlement?.usage_reset_period || null,
-				is_soft_limit: item.entitlement?.is_soft_limit ?? false,
-				static_value: item.entitlement?.static_value || null,
+				entitlement: item.entitlement,
+				sources: item.sources || [],
 			};
 		});
 	}, [entitlementsData]);
@@ -98,17 +89,18 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 
 	const getEntitlementValue = (entitlement: any) => {
 		const featureType = entitlement.feature_type;
+		const entitlementData = entitlement.entitlement;
 
 		if (featureType === FEATURE_TYPE.METERED) {
-			const limit = entitlement.usage_limit;
-			const resetPeriod = entitlement.usage_reset_period;
+			const limit = entitlementData?.usage_limit;
+			const resetPeriod = entitlementData?.usage_reset_period;
 			return limit !== null && limit !== undefined
 				? `${limit.toLocaleString()}${resetPeriod ? ` / ${resetPeriod.toLowerCase()}` : ''}`
 				: 'Unlimited';
 		} else if (featureType === FEATURE_TYPE.STATIC) {
-			return entitlement.static_value || '--';
+			return entitlementData?.static_value || '--';
 		} else if (featureType === FEATURE_TYPE.BOOLEAN) {
-			return entitlement.is_enabled ? 'Enabled' : 'Disabled';
+			return entitlementData?.is_enabled ? 'Enabled' : 'Disabled';
 		}
 		return '--';
 	};
@@ -121,7 +113,11 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 
 	const confirmDelete = () => {
 		if (entitlementToDelete) {
-			deleteEntitlement(entitlementToDelete.id);
+			// Find the subscription source to get the entitlement_id
+			const subscriptionSource = entitlementToDelete.sources?.find((source: any) => source.entity_type?.toLowerCase() === 'subscription');
+			if (subscriptionSource?.entitlement_id) {
+				deleteEntitlement(subscriptionSource.entitlement_id);
+			}
 		}
 	};
 
@@ -134,10 +130,6 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 		{
 			title: 'Feature Name',
 			render: (row: any) => <span>{row.feature?.name || 'Unknown Feature'}</span>,
-		},
-		{
-			title: 'Entity Type',
-			render: (row: any) => <span className='capitalize'>{row.entity_type?.toLowerCase()}</span>,
 		},
 		{
 			title: 'Feature Type',
@@ -153,8 +145,10 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 			fieldVariant: 'interactive',
 			hideOnEmpty: true,
 			render: (row: any) => {
-				// Only show actions for subscription entitlements
-				if (row.entity_type?.toLowerCase() !== 'subscription') {
+				// Only show actions if there's a subscription source
+				const hasSubscriptionSource = row.sources?.some((source: any) => source.entity_type?.toLowerCase() === 'subscription');
+
+				if (!hasSubscriptionSource) {
 					return null;
 				}
 
@@ -165,7 +159,7 @@ const SubscriptionEntitlementsSection: FC<SubscriptionEntitlementsSectionProps> 
 							e.preventDefault();
 							e.stopPropagation();
 						}}>
-						<DropdownMenu open={dropdownOpen === row.id} onOpenChange={(open) => setDropdownOpen(open ? row.id : null)}>
+						<DropdownMenu open={dropdownOpen === row.feature_id} onOpenChange={(open) => setDropdownOpen(open ? row.feature_id : null)}>
 							<DropdownMenuTrigger asChild>
 								<button className='focus:outline-none'>
 									<BsThreeDotsVertical className='text-base text-muted-foreground hover:text-foreground transition-colors' />
